@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Environment variables (contain secrets — never commit these)
+.env
+.env.local
+.env.*.local
+**/.env
+
+# Build output
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Claude / Superpowers internal files
+.claude/
+.superpowers/
+{frontend
