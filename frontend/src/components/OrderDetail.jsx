@@ -37,7 +37,11 @@ export default function OrderDetail({ order, operator, onClose, onComplete, onSp
   }
 
   async function handleOos(item) {
-    await api.flagOos(item.id, order.id, operator)
+    try {
+      await api.flagOos(item.id, order.id, operator)
+    } catch (err) {
+      setBlockError(err.message)
+    }
   }
 
   const useBoxMode = boxes.length > 0

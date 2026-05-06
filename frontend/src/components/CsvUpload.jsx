@@ -19,7 +19,7 @@ export default function CsvUpload({ onImported }) {
     try {
       const data = await api.uploadOrders(file)
       setResult(data)
-      if (onImported) onImported()
+      if (onImported) setTimeout(() => onImported(), 1500)
     } catch (err) {
       setError(err.message)
     } finally {
