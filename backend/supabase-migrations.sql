@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS sub_orders (
 CREATE TABLE IF NOT EXISTS sub_order_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   sub_order_id uuid REFERENCES sub_orders(id) ON DELETE CASCADE,
-  order_item_id uuid REFERENCES order_items(id) ON DELETE CASCADE
+  order_item_id uuid REFERENCES order_items(id) ON DELETE CASCADE,
+  UNIQUE (sub_order_id, order_item_id)
 );
 
 -- boxes: pre-calculated box plan per order (or sub-order)
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS box_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   box_id uuid REFERENCES boxes(id) ON DELETE CASCADE,
   order_item_id uuid REFERENCES order_items(id) ON DELETE CASCADE,
-  quantity integer NOT NULL DEFAULT 1
+  quantity integer NOT NULL DEFAULT 1 CHECK (quantity > 0)
 );
 
 -- events: generic event log for analytics
@@ -82,5 +83,18 @@ INSERT INTO settings (key, value) VALUES
 ON CONFLICT (key) DO NOTHING;
 
 -- Enable realtime on new tables
-ALTER PUBLICATION supabase_realtime ADD TABLE sub_orders;
-ALTER PUBLICATION supabase_realtime ADD TABLE boxes;
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'sub_orders'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE sub_orders;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname = 'supabase_realtime' AND tablename = 'boxes'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE boxes;
+  END IF;
+END $$;
