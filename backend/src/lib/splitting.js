@@ -14,8 +14,11 @@ export function splitAtMedian(sortedItems, threshold = 50) {
     }
   }
 
+  const sub2 = sortedItems.slice(splitIndex + 1)
+  if (sub2.length === 0) return null
+
   return {
     sub1: sortedItems.slice(0, splitIndex + 1),
-    sub2: sortedItems.slice(splitIndex + 1),
+    sub2,
   }
 }
