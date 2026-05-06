@@ -65,7 +65,7 @@ export default function Dashboard({ operator, onLogout }) {
 
   async function handleCompleteOrder() {
     if (activeOrder) {
-      await api.completeOrder(activeOrder.id)
+      await api.completeOrder(activeOrder.id, operator)
       showFeedback('success', `Order ${activeOrder.reference} completed!`)
       setActiveOrder(null)
       loadOrders()
@@ -91,8 +91,8 @@ export default function Dashboard({ operator, onLogout }) {
             result.product
           )
           break
-        case 'already_complete':
-          showFeedback('warning', `Already scanned: ${result.product.name}`)
+        case 'over_pick':
+          showFeedback('warning', `Let op: je hebt er al ${result.item.scanned_quantity} van ${result.product.name}`)
           break
         case 'unexpected_item':
           showFeedback('error', `Not on this order: ${result.product.name}`)
@@ -165,6 +165,7 @@ export default function Dashboard({ operator, onLogout }) {
               operator={operator}
               onClose={handleCloseOrder}
               onComplete={handleCompleteOrder}
+              onSplit={loadOrders}
             />
           ) : (
             <OrderList
@@ -172,6 +173,7 @@ export default function Dashboard({ operator, onLogout }) {
               loading={loading}
               operator={operator}
               onSelect={handleSelectOrder}
+              onRefresh={loadOrders}
             />
           )
         ) : (
