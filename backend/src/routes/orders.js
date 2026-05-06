@@ -213,20 +213,24 @@ router.post('/:id/split', async (req, res) => {
       .select().single()
     if (sub2Err) return res.status(500).json({ error: 'Sub-order aanmaken mislukt' })
 
-    await supabase.from('sub_order_items').insert(
+    const { error: si1Err } = await supabase.from('sub_order_items').insert(
       split.sub1.map(item => ({ sub_order_id: sub1.id, order_item_id: item.id }))
     )
-    await supabase.from('sub_order_items').insert(
+    if (si1Err) return res.status(500).json({ error: 'Items toewijzen aan deel 1 mislukt' })
+
+    const { error: si2Err } = await supabase.from('sub_order_items').insert(
       split.sub2.map(item => ({ sub_order_id: sub2.id, order_item_id: item.id }))
     )
+    if (si2Err) return res.status(500).json({ error: 'Items toewijzen aan deel 2 mislukt' })
 
     for (const [subOrder, items] of [[sub1, split.sub1], [sub2, split.sub2]]) {
       const boxPlan = packBoxes(items, { targetWeightGrams: targetWeight })
       for (const box of boxPlan) {
-        const { data: createdBox } = await supabase
+        const { data: createdBox, error: boxErr } = await supabase
           .from('boxes')
           .insert({ order_id: order.id, sub_order_id: subOrder.id, sequence_number: box.sequence_number, weight_grams: box.weight_grams })
           .select().single()
+        if (boxErr) return res.status(500).json({ error: 'Doos aanmaken mislukt' })
         if (createdBox && box.items.length > 0) {
           await supabase.from('box_items').insert(
             box.items.map(bi => ({ box_id: createdBox.id, order_item_id: bi.order_item_id, quantity: bi.quantity }))
