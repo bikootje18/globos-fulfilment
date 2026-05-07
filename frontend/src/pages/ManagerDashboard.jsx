@@ -10,16 +10,20 @@ export default function ManagerDashboard({ manager, onLogout }) {
   const [showSettings, setShowSettings] = useState(false)
   const [settings, setSettings] = useState(null)
 
-  useEffect(() => { loadDashboard() }, [])
+  useEffect(() => {
+    loadDashboard()
+    const id = setInterval(() => loadDashboard(true), 30000)
+    return () => clearInterval(id)
+  }, [])
 
-  async function loadDashboard() {
-    setLoading(true)
+  async function loadDashboard(silent = false) {
+    if (!silent) setLoading(true)
     try {
       const [dash, set] = await Promise.all([api.getDashboard(), api.getSettings()])
       setData(dash)
       setSettings(set)
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -61,6 +65,7 @@ export default function ManagerDashboard({ manager, onLogout }) {
       <div style={s.topbar}>
         <span style={s.title}>Manager-dashboard</span>
         <div style={s.topRight}>
+          <button style={s.refreshBtn} onClick={() => loadDashboard()}>Vernieuwen</button>
           <span style={s.badge}>Manager</span>
           <button style={s.logoutBtn} onClick={onLogout}>Uitloggen</button>
         </div>
@@ -196,6 +201,7 @@ const s = {
   title: { fontSize: '16px', fontWeight: '500', color: '#fff' },
   topRight: { display: 'flex', alignItems: 'center', gap: '10px' },
   badge: { fontSize: '12px', background: '#333', color: '#ccc', padding: '3px 10px', borderRadius: '12px' },
+  refreshBtn: { fontSize: '12px', color: '#ccc', border: '0.5px solid #444', background: 'none', borderRadius: '6px', padding: '4px 10px', cursor: 'pointer' },
   logoutBtn: { fontSize: '12px', color: '#999', border: 'none', background: 'none', cursor: 'pointer' },
   content: { padding: '16px', maxWidth: '680px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%' },
   empty: { textAlign: 'center', color: '#999', padding: '40px' },
