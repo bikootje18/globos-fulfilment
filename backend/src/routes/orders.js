@@ -68,6 +68,11 @@ router.get('/:id', async (req, res) => {
     if (data.boxes) data.boxes.sort((a, b) => a.sequence_number - b.sequence_number)
     if (data.sub_orders) data.sub_orders.sort((a, b) => a.sequence_number - b.sequence_number)
 
+    const { data: settings } = await supabase.from('settings').select('key, value')
+    const splitThreshold = parseInt((settings || []).find(s => s.key === 'split_threshold')?.value) || 50
+    const totalQty = (data.order_items || []).reduce((s, i) => s + i.quantity, 0)
+    data.split_suggested = totalQty > splitThreshold
+
     res.json(data)
   } catch (err) {
     res.status(500).json({ error: 'Internal error' })
