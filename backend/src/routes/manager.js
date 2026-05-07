@@ -209,7 +209,6 @@ router.post('/import-products', async (req, res) => {
     const rows = products.map(p => ({
       name: p.name,
       sku: p.sku,
-      barcode: p.sku, // article number as temporary barcode placeholder
       location: p.location || null,
     }))
 
