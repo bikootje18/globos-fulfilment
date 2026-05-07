@@ -1,0 +1,9 @@
+{
+  "name": "Globos Fulfilment",
+  "short_name": "Fulfilment",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f4f0",
+  "theme_color": "#1a1a18",
+  "orientation": "portrait"
+}
