@@ -73,7 +73,7 @@ export default function OperatorLogin({ onLogin }) {
           ))}
         </div>
         <div style={s.divider}><span style={s.dividerText}>of login als</span></div>
-        <button style={s.managerBtn} onClick={() => setShowPin(true)}>
+        <button style={s.managerBtn} onClick={() => onLogin({ name: 'Manager', role: 'manager' })}>
           Manager-dashboard
         </button>
       </div>
