@@ -38,6 +38,16 @@ export default function ManagerDashboard({ manager, onLogout }) {
     }
   }
 
+  async function handleDemoOrder() {
+    setGenerating(true)
+    try {
+      await api.generateDemoOrder()
+      await loadDashboard()
+    } finally {
+      setGenerating(false)
+    }
+  }
+
   async function handleDeleteTests() {
     if (!confirm('Alle testorders verwijderen?')) return
     setDeleting(true)
@@ -146,6 +156,9 @@ export default function ManagerDashboard({ manager, onLogout }) {
                   </button>
                 ))}
               </div>
+              <button style={s.demoBtn} disabled={generating} onClick={handleDemoOrder}>
+                Demo order (8868 + 8871)
+              </button>
               <button style={s.deleteBtn} disabled={deleting} onClick={handleDeleteTests}>
                 {deleting ? 'Bezig...' : 'Verwijder alle testorders'}
               </button>
@@ -223,6 +236,7 @@ const s = {
   oosOp: { fontSize: '12px', color: '#aaa' },
   testGrid: { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' },
   testBtn: { padding: '10px', borderRadius: '8px', border: '0.5px solid #e0dfd8', background: '#fff', cursor: 'pointer', fontSize: '13px', color: '#333' },
+  demoBtn: { fontSize: '13px', color: '#1a5fae', border: '0.5px solid #85b7eb', background: '#e6f0fb', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer', marginBottom: '8px' },
   deleteBtn: { fontSize: '13px', color: '#d93025', border: '0.5px solid #fca5a5', background: '#fef2f2', borderRadius: '8px', padding: '8px 16px', cursor: 'pointer' },
   settingsToggle: { fontSize: '13px', color: '#555', border: '0.5px solid #ccc', background: '#fafaf8', borderRadius: '6px', padding: '6px 12px', cursor: 'pointer' },
   settingsForm: { marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '10px' },

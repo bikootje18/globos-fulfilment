@@ -53,6 +53,8 @@ export const api = {
   getDashboard: () => request('/api/manager/dashboard'),
   generateTestOrder: (size, item_count) =>
     request('/api/manager/test-order', { method: 'POST', body: JSON.stringify({ size, item_count }) }),
+  generateDemoOrder: () =>
+    request('/api/manager/demo-order', { method: 'POST' }),
   deleteTestOrders: () =>
     request('/api/manager/test-orders', { method: 'DELETE' }),
   getSettings: () => request('/api/manager/settings'),

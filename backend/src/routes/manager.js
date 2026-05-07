@@ -102,6 +102,47 @@ router.get('/dashboard', async (req, res) => {
   }
 })
 
+// POST /api/manager/demo-order
+router.post('/demo-order', async (req, res) => {
+  try {
+    const DEMO_SKUS = ['8868', '8871']
+
+    const { data: products, error: prodError } = await supabase
+      .from('products')
+      .select('id, name')
+      .in('sku', DEMO_SKUS)
+
+    if (prodError) return res.status(500).json({ error: prodError.message })
+    if (!products || products.length === 0) {
+      return res.status(422).json({ error: 'Demo-producten niet gevonden in catalogus' })
+    }
+
+    const reference = `DEMO-${Date.now()}`
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .insert({ reference, customer_name: 'Demo Order', status: 'pending', is_test: true })
+      .select()
+      .single()
+
+    if (orderError) return res.status(500).json({ error: orderError.message })
+
+    const items = products.map(p => ({
+      order_id: order.id,
+      product_id: p.id,
+      quantity: 1,
+      scanned_quantity: 0,
+      out_of_stock_quantity: 0,
+    }))
+
+    const { error: itemsError } = await supabase.from('order_items').insert(items)
+    if (itemsError) return res.status(500).json({ error: itemsError.message })
+
+    res.json({ order_id: order.id, reference, items_count: items.length })
+  } catch (err) {
+    res.status(500).json({ error: 'Internal error' })
+  }
+})
+
 // POST /api/manager/test-order
 router.post('/test-order', async (req, res) => {
   try {
