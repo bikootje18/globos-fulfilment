@@ -45,6 +45,10 @@ export const api = {
       })
   },
 
+  // Products
+  importProducts: (products) =>
+    request('/api/manager/import-products', { method: 'POST', body: JSON.stringify({ products }) }),
+
   // Manager
   getDashboard: () => request('/api/manager/dashboard'),
   generateTestOrder: (size, item_count) =>

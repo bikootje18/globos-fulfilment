@@ -198,6 +198,38 @@ router.delete('/test-orders', async (req, res) => {
   }
 })
 
+// POST /api/manager/import-products
+router.post('/import-products', async (req, res) => {
+  try {
+    const { products } = req.body
+    if (!Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({ error: 'Geen producten aangeleverd' })
+    }
+
+    const rows = products.map(p => ({
+      name: p.name,
+      sku: p.sku,
+      barcode: p.sku, // article number as temporary barcode placeholder
+      location: p.location || null,
+    }))
+
+    const BATCH = 500
+    let imported = 0
+    for (let i = 0; i < rows.length; i += BATCH) {
+      const batch = rows.slice(i, i + BATCH)
+      const { error } = await supabase
+        .from('products')
+        .upsert(batch, { onConflict: 'sku' })
+      if (error) return res.status(500).json({ error: error.message })
+      imported += batch.length
+    }
+
+    res.json({ imported })
+  } catch (err) {
+    res.status(500).json({ error: 'Internal error' })
+  }
+})
+
 // GET /api/manager/settings
 router.get('/settings', async (req, res) => {
   try {

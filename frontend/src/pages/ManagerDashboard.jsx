@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { api } from '../lib/api.js'
 import CsvUpload from '../components/CsvUpload.jsx'
+import ProductImport from '../components/ProductImport.jsx'
 
 export default function ManagerDashboard({ manager, onLogout }) {
   const [data, setData] = useState(null)
@@ -124,6 +125,10 @@ export default function ManagerDashboard({ manager, onLogout }) {
                 ))}
               </Section>
             )}
+
+            <Section title="Producten importeren">
+              <ProductImport onImported={loadDashboard} />
+            </Section>
 
             <Section title="Orders importeren">
               <CsvUpload onImported={loadDashboard} />
