@@ -1,13 +1,12 @@
 import { useState } from 'react'
 import OperatorLogin from './components/OperatorLogin.jsx'
 import Dashboard from './pages/Dashboard.jsx'
+import ManagerDashboard from './pages/ManagerDashboard.jsx'
 
 export default function App() {
-  const [operator, setOperator] = useState(null)
+  const [user, setUser] = useState(null) // { name, role: 'operator'|'manager' }
 
-  if (!operator) {
-    return <OperatorLogin onLogin={setOperator} />
-  }
-
-  return <Dashboard operator={operator} onLogout={() => setOperator(null)} />
+  if (!user) return <OperatorLogin onLogin={setUser} />
+  if (user.role === 'manager') return <ManagerDashboard manager={user} onLogout={() => setUser(null)} />
+  return <Dashboard operator={user.name} onLogout={() => setUser(null)} />
 }

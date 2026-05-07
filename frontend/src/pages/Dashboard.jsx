@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase.js'
 import { api } from '../lib/api.js'
 import { useScanInput } from '../hooks/useScanInput.js'
@@ -18,6 +18,9 @@ export default function Dashboard({ operator, onLogout }) {
     loadOrders()
   }, [])
 
+  const activeOrderRef = useRef(null)
+  useEffect(() => { activeOrderRef.current = activeOrder }, [activeOrder])
+
   // Realtime subscription — updates all tablets instantly
   useEffect(() => {
     const channel = supabase
@@ -30,18 +33,23 @@ export default function Dashboard({ operator, onLogout }) {
         { event: '*', schema: 'public', table: 'order_items' },
         () => {
           loadOrders()
-          if (activeOrder) refreshActiveOrder(activeOrder.id)
+          if (activeOrderRef.current) refreshActiveOrder(activeOrderRef.current.id)
         }
       )
       .subscribe()
 
     return () => supabase.removeChannel(channel)
-  }, [activeOrder])
+  }, [])
 
   async function loadOrders() {
-    const data = await api.getOrders()
-    setOrders(data)
-    setLoading(false)
+    try {
+      const data = await api.getOrders()
+      setOrders(data)
+    } catch {
+      showFeedback('error', 'Orders laden mislukt — probeer opnieuw')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function refreshActiveOrder(id) {
@@ -59,16 +67,26 @@ export default function Dashboard({ operator, onLogout }) {
   }
 
   async function handleCloseOrder() {
-    if (activeOrder) await api.unlockOrder(activeOrder.id)
+    if (activeOrder) {
+      try {
+        await api.unlockOrder(activeOrder.id)
+      } catch {
+        // unlock failed — still clear local state, backend will time out lock eventually
+      }
+    }
     setActiveOrder(null)
   }
 
   async function handleCompleteOrder() {
     if (activeOrder) {
-      await api.completeOrder(activeOrder.id)
-      showFeedback('success', `Order ${activeOrder.reference} completed!`)
-      setActiveOrder(null)
-      loadOrders()
+      try {
+        await api.completeOrder(activeOrder.id, operator)
+        showFeedback('success', `Order ${activeOrder.reference} klaar!`)
+        setActiveOrder(null)
+        loadOrders()
+      } catch (err) {
+        showFeedback('error', err.message)
+      }
     }
   }
 
@@ -91,8 +109,8 @@ export default function Dashboard({ operator, onLogout }) {
             result.product
           )
           break
-        case 'already_complete':
-          showFeedback('warning', `Already scanned: ${result.product.name}`)
+        case 'over_pick':
+          showFeedback('warning', `Let op: je hebt er al ${result.item.scanned_quantity} van ${result.product.name}`)
           break
         case 'unexpected_item':
           showFeedback('error', `Not on this order: ${result.product.name}`)
@@ -165,6 +183,7 @@ export default function Dashboard({ operator, onLogout }) {
               operator={operator}
               onClose={handleCloseOrder}
               onComplete={handleCompleteOrder}
+              onSplit={loadOrders}
             />
           ) : (
             <OrderList
@@ -172,6 +191,7 @@ export default function Dashboard({ operator, onLogout }) {
               loading={loading}
               operator={operator}
               onSelect={handleSelectOrder}
+              onRefresh={loadOrders}
             />
           )
         ) : (
