@@ -3,10 +3,24 @@ import OperatorLogin from './components/OperatorLogin.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import ManagerDashboard from './pages/ManagerDashboard.jsx'
 
-export default function App() {
-  const [user, setUser] = useState(null) // { name, role: 'operator'|'manager' }
+function loadUser() {
+  try { return JSON.parse(sessionStorage.getItem('user')) } catch { return null }
+}
 
-  if (!user) return <OperatorLogin onLogin={setUser} />
-  if (user.role === 'manager') return <ManagerDashboard manager={user} onLogout={() => setUser(null)} />
-  return <Dashboard operator={user.name} onLogout={() => setUser(null)} />
+export default function App() {
+  const [user, setUser] = useState(loadUser)
+
+  function handleLogin(u) {
+    sessionStorage.setItem('user', JSON.stringify(u))
+    setUser(u)
+  }
+
+  function handleLogout() {
+    sessionStorage.removeItem('user')
+    setUser(null)
+  }
+
+  if (!user) return <OperatorLogin onLogin={handleLogin} />
+  if (user.role === 'manager') return <ManagerDashboard manager={user} onLogout={handleLogout} />
+  return <Dashboard operator={user.name} onLogout={handleLogout} />
 }
