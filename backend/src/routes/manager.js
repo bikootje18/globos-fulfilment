@@ -18,7 +18,6 @@ router.get('/dashboard', async (req, res) => {
     const { data: orders, error: ordersError } = await supabase
       .from('orders')
       .select('id, status, created_at, completed_at')
-      .eq('is_test', false)
       .gte('created_at', since)
 
     if (ordersError) return res.status(500).json({ error: ordersError.message })
