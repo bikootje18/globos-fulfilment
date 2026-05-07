@@ -1,29 +1,62 @@
 import { useState, useRef } from 'react'
 import { api } from '../lib/api.js'
 
+function parseRfc4180Row(line, sep) {
+  const fields = []
+  let i = 0
+  while (i <= line.length) {
+    if (line[i] === '"') {
+      // Quoted field
+      let field = ''
+      i++ // skip opening quote
+      while (i < line.length) {
+        if (line[i] === '"' && line[i + 1] === '"') {
+          field += '"'
+          i += 2
+        } else if (line[i] === '"') {
+          i++ // skip closing quote
+          break
+        } else {
+          field += line[i++]
+        }
+      }
+      fields.push(field.trim())
+      if (line[i] === sep) i++ // skip separator
+    } else {
+      // Unquoted field
+      const end = line.indexOf(sep, i)
+      if (end === -1) {
+        fields.push(line.slice(i).trim())
+        break
+      }
+      fields.push(line.slice(i, end).trim())
+      i = end + 1
+    }
+  }
+  return fields
+}
+
 function parseCsv(text) {
-  const lines = text.trim().split(/\r?\n/)
+  // Strip UTF-8 BOM
+  const cleaned = text.replace(/^﻿/, '').trim()
+  const lines = cleaned.split(/\r?\n/)
   if (lines.length < 2) return []
 
   // Detect separator: semicolon or comma
   const sep = lines[0].includes(';') ? ';' : ','
 
-  // Strip BOM and parse header
-  const header = lines[0].replace(/^﻿/, '').split(sep).map(h =>
-    h.trim().replace(/^"|"$/g, '').toLowerCase()
-  )
+  const header = parseRfc4180Row(lines[0], sep).map(h => h.toLowerCase())
 
   const colArticle = header.findIndex(h => h.includes('artikelnummer') || h === 'sku')
   const colName    = header.findIndex(h => h.includes('artikelnaam') || h === 'name')
   const colLoc     = header.findIndex(h => h.includes('locatie') || h === 'location')
 
-  if (colArticle === -1 || colName === -1) return null // signal bad format
+  if (colArticle === -1 || colName === -1) return null
 
   const products = []
   for (let i = 1; i < lines.length; i++) {
-    const raw = lines[i]
-    if (!raw.trim()) continue
-    const cols = raw.split(sep).map(c => c.trim().replace(/^"|"$/g, ''))
+    if (!lines[i].trim()) continue
+    const cols = parseRfc4180Row(lines[i], sep)
     const sku  = cols[colArticle]?.trim()
     const name = cols[colName]?.trim()
     if (!sku || !name) continue
